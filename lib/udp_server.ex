@@ -7,6 +7,7 @@ defmodule UdpServer do
   # This runs in the caller's context
   def start_link(port \\ 2052) do
     GenServer.start_link(__MODULE__, port) # Start 'er up
+    |> IO.inspect(label: 'start_link/1')
   end
 
   # Initialization that runs in the server context (inside the server process right after it boots)
@@ -17,6 +18,7 @@ defmodule UdpServer do
     #   - active: gen_udp will handle data reception, and send us a message `{:udp, socket, address, port, data}` when new data arrives on the socket
     # Returns: {:ok, socket}
     :gen_udp.open(port, [:binary, active: true])
+    |> IO.inspect(label: 'init/0')
   end
 
   # define a callback handler for when gen_udp sends us a UDP packet
@@ -25,9 +27,10 @@ defmodule UdpServer do
     handle_packet(data, socket)
   end
 
+  ### ALERT: you may not want to support the quit message in a production UDP server ###
   # pattern match the "quit" message
   defp handle_packet("quit\n", socket) do
-    IO.puts("Received: quit")
+    IO.puts("Received: quit. Closing down...")
 
     # close the socket
     :gen_udp.close(socket)
