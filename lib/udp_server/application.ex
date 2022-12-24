@@ -10,6 +10,8 @@ defmodule UdpServer.Application do
     children = [
       # Starts a worker by calling: UdpServer.Worker.start_link(arg)
       # {UdpServer.Worker, arg}
+      {Phoenix.PubSub, name: UdpServer.PubSub},
+      {UdpServer.PubSubServer, []},
       {UdpServer, 2052},
     ]
 

@@ -6,8 +6,13 @@ defmodule UdpServer do
   # it takes a single parameter `port` which defaults to `2052`
   # This runs in the caller's context
   def start_link(port \\ 2052) do
-    GenServer.start_link(__MODULE__, port) # Start 'er up
-    |> IO.inspect(label: 'start_link/1')
+    process = GenServer.start_link(__MODULE__, port) # Start 'er up
+
+    IO.inspect(process, label: 'start_link/1')
+
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:start_link", process)
+
+    process
   end
 
   # Initialization that runs in the server context (inside the server process right after it boots)
@@ -17,8 +22,13 @@ defmodule UdpServer do
     #   - binary: request that data be returned as a `String`
     #   - active: gen_udp will handle data reception, and send us a message `{:udp, socket, address, port, data}` when new data arrives on the socket
     # Returns: {:ok, socket}
-    :gen_udp.open(port, [:binary, active: true])
-    |> IO.inspect(label: 'init/0')
+    server = :gen_udp.open(port, [:binary, active: true])
+
+    IO.inspect(server, label: 'init/0')
+
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:init", server)
+
+    server
   end
 
   # define a callback handler for when gen_udp sends us a UDP packet
@@ -30,6 +40,8 @@ defmodule UdpServer do
   ### ALERT: you may not want to support the quit message in a production UDP server ###
   # pattern match the "quit" message
   defp handle_packet("quit\n", socket) do
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:close", "quit")
+
     IO.puts("Received: quit. Closing down...")
 
     # close the socket
@@ -44,6 +56,8 @@ defmodule UdpServer do
 
   # fallback pattern match to handle all other (non-"quit") messages
   defp handle_packet(data, socket) do
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:packet", data)
+
     # print the message
     IO.puts("Received: #{String.trim data}")
 
