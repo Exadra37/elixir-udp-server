@@ -8,9 +8,9 @@ defmodule UdpServer do
   def start_link(port \\ 2052) do
     process = GenServer.start_link(__MODULE__, port) # Start 'er up
 
-    IO.inspect(process, label: 'start_link/1')
+    # IO.inspect(process, label: 'start_link/1')u
 
-    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:start_link", process)
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:start_link, process})
 
     process
   end
@@ -24,9 +24,9 @@ defmodule UdpServer do
     # Returns: {:ok, socket}
     server = :gen_udp.open(port, [:binary, active: true])
 
-    IO.inspect(server, label: 'init/0')
+    # IO.inspect(server, label: 'init/0')
 
-    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:init", server)
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:init, server})
 
     server
   end
@@ -40,9 +40,9 @@ defmodule UdpServer do
   ### ALERT: you may not want to support the quit message in a production UDP server ###
   # pattern match the "quit" message
   defp handle_packet("quit\n", socket) do
-    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:close", "quit")
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:close, "quit"})
 
-    IO.puts("Received: quit. Closing down...")
+    # IO.puts("Received: quit. Closing down...")
 
     # close the socket
     :gen_udp.close(socket)
@@ -56,10 +56,10 @@ defmodule UdpServer do
 
   # fallback pattern match to handle all other (non-"quit") messages
   defp handle_packet(data, socket) do
-    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:packet", data)
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:packet, data})
 
     # print the message
-    IO.puts("Received: #{String.trim data}")
+    # IO.puts("Received: #{String.trim data}")
 
     # IRL: do something more interesting...
 
