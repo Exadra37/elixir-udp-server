@@ -23,7 +23,7 @@ PubSubServer.handle_info/2 data: {:start_link, {:ok, #PID<0.246.0>}}
 PubSubServer.handle_info/2 state: [{:start_link, {:ok, #PID<0.246.0>}}, {:init, {:ok, #Port<0.10>}} | {}]
 ```
 
-Now, send messages to the UDP server from another terminal:
+Now, in another terminal and from the root of this repo send the message at the file `ham_message.txt` to the UDP server:
 
 ```console
 cat ham_message.txt | nc -u -w0 0.0.0.0 2052
