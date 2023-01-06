@@ -58,7 +58,7 @@ iex(1)> PubSubServer.handle_info/2 {:packet, packet} = data: {:packet,
   :programid, :adif_ver, :my_gridsquare]}
 ```
 
-The result has the format {:ok, ham_message, control} or {:error, message, control}. 
+The result has the format `{:ok, ham_message, control}` or `{:error, message, control}`. 
 
 The received ham message is parsed only if all the attributes are present and in the correct order as per the returned control list where `:my_gridsquare` is the last attribute processed and `:my_gridsquare` the first.
 
