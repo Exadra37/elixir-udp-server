@@ -305,6 +305,10 @@ defmodule HamMessageParser do
     {:ok, ham_message, control}
   end
 
+  defp _parse({"<EOR>\n", %HamMessageParser{} = ham_message, control}) do
+    {:ok, ham_message, control}
+  end
+
   defp _parse({"", %HamMessageParser{} = _ham_message, control}) do
     {:error, :no_message_termination_eor, control}
   end

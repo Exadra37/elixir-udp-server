@@ -14,11 +14,24 @@ defmodule UdpServer.PubSubServer do
     {:ok, {}}
   end
 
+  def handle_info({:packet, packet} = data, state) do
+    # state = [data | state]
+    # punt the data to a new function that will do pattern matching
+    IO.inspect(data, label: "PubSubServer.handle_info/2 {:packet, packet} = data")
+    # IO.inspect(state, label: "PubSubServer.handle_info/2 state")
+
+    HamMessageParser.parse(packet)
+    |> IO.inspect()
+
+    {:noreply, state}
+  end
+
   def handle_info(data, state) do
     state = [data | state]
     # punt the data to a new function that will do pattern matching
     IO.inspect(data, label: "PubSubServer.handle_info/2 data")
     IO.inspect(state, label: "PubSubServer.handle_info/2 state")
+
     {:noreply, state}
   end
 
