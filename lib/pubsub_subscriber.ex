@@ -1,58 +1,61 @@
 defmodule UdpServer.PubSubSubscriber do
 
+  @moduledoc """
+  # PubSub Subscriber Example Module
+
+  Use this module as inspiration to write a PubSub Subscriber on your application
+  to subscribe to the packets received by the UDP server.
+  """
+
   use GenServer
 
-  def start_link(args) do
-    IO.inspect args, label: "args"
-    GenServer.start_link(__MODULE__, [], name: __MODULE__) # Start 'er up
-    # |> IO.inspect(label: 'PubSubServer.start_link/1')
+  require Logger
+
+  def start_link(_args) do
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  # Initialization that runs in the server context (inside the server process right after it boots)
   def init(_args) do
     Phoenix.PubSub.subscribe(UdpServer.PubSub, "udp:server")
-    # |> IO.inspect(label: 'PubSubServer.init/1')
     {:ok, []}
   end
 
   def handle_info({:packet, packet} = data, state) do
-    state = [data | state]
+    Logger.debug(%{handle_info_packet: packet})
 
-    HamMessageParser.parse(packet)
-    |> IO.inspect(label: ":packet parsed")
+    UdpServer.PacketsAgent.add_packet(packet)
+
+    state = [data | state]
 
     {:noreply, state}
   end
 
   def handle_info({:start_link, _process} = data, state) do
-    state = [data | state]
+    Logger.debug(%{handle_info_start_link: data})
 
-    IO.inspect(data, label: ":start_link data")
-    IO.inspect(state, label: ":start_link state")
+    state = [data | state]
 
     {:noreply, state}
   end
 
   def handle_info({:init, _process} = data, state) do
-    state = [data | state]
+    Logger.debug(%{handle_info_init: data})
 
-    IO.inspect(data, label: ":init data")
-    IO.inspect(state, label: ":init state")
+    state = [data | state]
 
     {:noreply, state}
   end
 
   def handle_info({:close, _process} = data, state) do
-    state = [data | state]
+    Logger.debug(%{handle_info_close: data})
 
-    IO.inspect(data, label: ":close data")
-    IO.inspect(state, label: ":close state")
+    state = [data | state]
 
     {:noreply, state}
   end
 
   def handle_call(:state, from, state) do
-    IO.inspect(from, label: "handle_call/2 from")
+    Logger.debug(%{handle_call_from: from})
     {:reply, state, state}
   end
 

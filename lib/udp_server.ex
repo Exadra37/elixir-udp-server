@@ -47,8 +47,6 @@ defmodule UdpServer do
   def handle_call(:stop, _from, socket) do
     Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:close, "quit"})
 
-    # IO.puts("Received: quit. Closing down...")
-
     # close the socket
     :gen_udp.close(socket)
 

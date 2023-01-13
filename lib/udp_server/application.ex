@@ -12,6 +12,7 @@ defmodule UdpServer.Application do
       # {UdpServer.Worker, arg}
       {Phoenix.PubSub, name: UdpServer.PubSub},
       {UdpServer.PubSubSubscriber, []},
+      {UdpServer.PacketsAgent, []},
       {UdpServer, 2052},
     ]
 

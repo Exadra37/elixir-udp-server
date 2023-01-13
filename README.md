@@ -1,6 +1,6 @@
 # Elixir UDP Server Example
 
-A very simple UDP server example for Elixir that uses the code borrowed from [this gist](https://gist.github.com/joshnuss/08603e11615ee0de65724be4d6335475).
+A very simple UDP server example for Elixir that started of the code borrowed from [this gist](https://gist.github.com/joshnuss/08603e11615ee0de65724be4d6335475).
 
 
 ## Usage
