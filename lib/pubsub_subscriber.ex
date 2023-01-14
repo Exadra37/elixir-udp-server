@@ -23,8 +23,6 @@ defmodule UdpServer.PubSubSubscriber do
   def handle_info({:packet, packet} = data, state) do
     Logger.debug(%{handle_info_packet: packet})
 
-    UdpServer.PacketsAgent.add_packet(packet)
-
     state = [data | state]
 
     {:noreply, state}

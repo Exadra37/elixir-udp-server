@@ -13,7 +13,7 @@ defmodule UdpServer.Application do
       {Phoenix.PubSub, name: UdpServer.PubSub},
       {UdpServer.PubSubSubscriber, []},
       {UdpServer.PacketsAgent, []},
-      {UdpServer, 2052},
+      {UdpServer, %{port: 2052, pubsub: nil, agent: UdpServer.PacketsAgent}},
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
