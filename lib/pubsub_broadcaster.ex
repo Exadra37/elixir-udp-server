@@ -1,19 +1,23 @@
-defmodule PubSub.Broadcaster do
+defmodule UdpServer.PubSub.Broadcaster do
 
-  def handle_udp_start_link(process) do
-    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:start_link, process})
+  def event_boot_udp_server(event) do
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:boot, event})
   end
 
-  def handle_udp_init(server) do
-    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:init, server})
+  # def event_start_udp_server(event) do
+  #   Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:start_link, event})
+  # end
+
+  # def event_init_udp_server(event) do
+  #   Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:init, event})
+  # end
+
+  def event_udp_packet(event) do
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:packet, event})
   end
 
-  def handle_udp_packet(data) do
-    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:packet, data})
-  end
-
-  def handle_udp_close(from) do
-    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:close, from})
+  def event_close_udp_server(event) do
+    Phoenix.PubSub.broadcast_from(UdpServer.PubSub, self(), "udp:server", {:close, event})
   end
 
 end

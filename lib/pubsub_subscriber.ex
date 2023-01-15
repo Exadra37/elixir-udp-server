@@ -1,4 +1,4 @@
-defmodule UdpServer.PubSubSubscriber do
+defmodule UdpServer.PubSub.Subscriber do
 
   @moduledoc """
   # PubSub Subscriber Example Module
@@ -28,16 +28,24 @@ defmodule UdpServer.PubSubSubscriber do
     {:noreply, state}
   end
 
-  def handle_info({:start_link, _process} = data, state) do
-    Logger.debug(%{handle_info_start_link: data})
+  # def handle_info({:start_link, _process} = data, state) do
+  #   Logger.debug(%{handle_info_start_link: data})
 
-    state = [data | state]
+  #   state = [data | state]
 
-    {:noreply, state}
-  end
+  #   {:noreply, state}
+  # end
 
-  def handle_info({:init, _process} = data, state) do
-    Logger.debug(%{handle_info_init: data})
+  # def handle_info({:init, _process} = data, state) do
+  #   Logger.debug(%{handle_info_init: data})
+
+  #   state = [data | state]
+
+  #   {:noreply, state}
+  # end
+
+  def handle_info({:boot, _process} = data, state) do
+    Logger.debug(%{handle_info_boot: data})
 
     state = [data | state]
 

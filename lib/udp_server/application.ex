@@ -11,9 +11,9 @@ defmodule UdpServer.Application do
       # Starts a worker by calling: UdpServer.Worker.start_link(arg)
       # {UdpServer.Worker, arg}
       {Phoenix.PubSub, name: UdpServer.PubSub},
-      {UdpServer.PubSubSubscriber, []},
+      {UdpServer.PubSub.Subscriber, []},
       {UdpServer.PacketsAgent, []},
-      {UdpServer, %{port: 2052, pubsub: nil, agent: UdpServer.PacketsAgent}},
+      {UdpServer, %UdpServerOptions{}},
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
