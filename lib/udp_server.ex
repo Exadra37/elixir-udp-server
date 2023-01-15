@@ -14,7 +14,8 @@ defmodule UdpServerOptions do
     pubsub: UdpServer.PubSub.Broadcaster,
 
     # Customize how the Agent works by providing your own implementation.
-    agent: UdpServer.PacketsAgent,
+    servers_agent: UdpServer.ServersAgent,
+    packets_agent: UdpServer.PacketsAgent,
   ]
 end
 
@@ -53,40 +54,31 @@ defmodule UdpServer do
   ]
 
   # This runs in the caller's context
-  def start_link(%{pubsub: pubsub, agent: agent} = opts) do
-    IO.inspect(opts, label: "START OPTS")
-    # {:ok, pid} =
-    process = GenServer.start_link(__MODULE__, opts, name: __MODULE__) # Start 'er up
-
-    # event = %UdpServer{opts: opts, pid: pid}
-
-    # unless is_nil(agent), do: Kernel.apply(agent, :event_start_udp_server, [event])
-    # unless is_nil(pubsub), do: Kernel.apply(pubsub, :event_start_udp_server, [event])
-
-    process
+  def start_link(%UdpServerOptions{} = opts) do
+     GenServer.start_link(__MODULE__, opts, name: __MODULE__) # Start 'er up
   end
 
   # Initialization that runs in the server context (inside the server process right after it boots)
   @impl true
-  def init(%{port: port, pubsub: pubsub, agent: agent, uid_algorithm: algorithm} = opts) do
-    IO.inspect(port, label: "INIT PORT")
+  def init(%{
+      port: port,
+      pubsub: pubsub,
+      servers_agent: servers_agent,
+      uid_algorithm: _algorithm
+    } = opts
+  ) do
     # Use erlang's `gen_udp` module to open a socket
     # With options:
     #   - binary: request that data be returned as a `String`
     #   - active: gen_udp will handle data reception, and send us a message `{:udp, socket, address, port, data}` when new data arrives on the socket
-    # Returns: {:ok, socket}
     {:ok, socket} = :gen_udp.open(port, [:binary, active: true])
-    IO.inspect(socket, label: "INIT SOCKET")
 
     pid = self()
 
     nano_seconds = :os.system_time(:nano_seconds)
 
-    # uid = :crypto.hash(algorithm, [pid, socket, nano_seconds]) |> Base.encode16
-    uid = :crypto.hash(algorithm, "#{pid}#{socket}#{nano_seconds}") |> Base.encode16
-
     event = %UdpServer{
-      uid: "#{to_string(pid)}#{socket}",
+      uid: "#{pid}#{socket}",
       active: true,
       opts: opts,
       pid: pid,
@@ -96,12 +88,8 @@ defmodule UdpServer do
       },
     }
 
-    unless is_nil(agent), do: Kernel.apply(agent, :event_boot_udp_server, [event])
+    unless is_nil(servers_agent), do: Kernel.apply(servers_agent, :event_boot_udp_server, [event])
     unless is_nil(pubsub), do: Kernel.apply(pubsub, :event_boot_udp_server, [event])
-
-    # to get the pid updated
-    # unless is_nil(agent), do: Kernel.apply(agent, :event_start_udp_server, [event])
-    # unless is_nil(pubsub), do: Kernel.apply(pubsub, :event_start_udp_server, [event])
 
     {:ok, event}
   end
@@ -110,10 +98,13 @@ defmodule UdpServer do
   @impl true
   def handle_info(
     {:udp, _socket, ip_adress, _port, packet},
-    %{opts: %{agent: agent, pubsub: pubsub, uid_algorithm: algorithm}} = state
+    %{opts: %{
+        packets_agent: packets_agent,
+        servers_agent: servers_agent,
+        pubsub: pubsub,
+        uid_algorithm: algorithm
+      }} = state
   ) do
-
-    IO.inspect(ip_adress, label: 'ADDRESS')
 
     nano_seconds = :os.system_time(:nano_seconds)
 
@@ -131,19 +122,13 @@ defmodule UdpServer do
       data: packet,
     }
 
-    track_packets = [{uid, nano_seconds} | state.track_packets]
+    track_packets = [%{uid: uid, at_nano_seconds: nano_seconds, ip_adress: ip_adress} | state.track_packets]
     state = Map.put(state, :track_packets, track_packets)
 
-    IO.inspect(state, label: "STATE")
-    # IO.inspect(socket, label: "SOCKET")
-    # raise "testing..."
-    unless is_nil(agent), do: Kernel.apply(agent, :event_udp_packet, [packet])
     unless is_nil(pubsub), do: Kernel.apply(pubsub, :event_udp_packet, [packet])
+    unless is_nil(packets_agent), do: Kernel.apply(packets_agent, :event_udp_packet, [packet])
+    unless is_nil(servers_agent), do: Kernel.apply(servers_agent, :event_update_udp_server, [state])
 
-    # GenServer will understand this to mean "continue waiting for the next message"
-    # parameters:
-    # :noreply - no reply is needed
-    # new_state: keep the socket as the current state
     {:noreply, state}
   end
 
@@ -151,10 +136,9 @@ defmodule UdpServer do
   def handle_call(
     :stop,
     from,
-    %{opts: %{agent: agent, pubsub: pubsub}, socket: socket} = state = %UdpServer{}
+    %{opts: %{servers_agent: servers_agent, pubsub: pubsub}, socket: socket} = state = %UdpServer{}
   ) do
 
-    # close the socket
     :gen_udp.close(socket)
 
     closed = %{
@@ -165,7 +149,7 @@ defmodule UdpServer do
     state = Map.put(state, :active, false)
     state = Map.put(state, :closed, closed)
 
-    unless is_nil(agent), do: Kernel.apply(agent, :event_close_udp_server, [state])
+    unless is_nil(servers_agent), do: Kernel.apply(servers_agent, :event_close_udp_server, [state])
     unless is_nil(pubsub), do: Kernel.apply(pubsub, :event_close_udp_server, [state])
 
     # GenServer will understand this to mean we want to stop the server

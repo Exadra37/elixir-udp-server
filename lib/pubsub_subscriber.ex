@@ -28,24 +28,16 @@ defmodule UdpServer.PubSub.Subscriber do
     {:noreply, state}
   end
 
-  # def handle_info({:start_link, _process} = data, state) do
-  #   Logger.debug(%{handle_info_start_link: data})
-
-  #   state = [data | state]
-
-  #   {:noreply, state}
-  # end
-
-  # def handle_info({:init, _process} = data, state) do
-  #   Logger.debug(%{handle_info_init: data})
-
-  #   state = [data | state]
-
-  #   {:noreply, state}
-  # end
-
   def handle_info({:boot, _process} = data, state) do
     Logger.debug(%{handle_info_boot: data})
+
+    state = [data | state]
+
+    {:noreply, state}
+  end
+
+  def handle_info({:update, _process} = data, state) do
+    Logger.debug(%{handle_info_update: data})
 
     state = [data | state]
 
