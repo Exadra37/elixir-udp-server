@@ -1,3 +1,4 @@
+
 defmodule UdpServerOptions do
   defstruct [
 
@@ -33,6 +34,15 @@ defmodule UdpServerPacket do
   ]
 end
 
+defmodule UdpServerTrackPacket do
+  defstruct [
+    packet_uid: nil,
+    server_uid: nil,
+    at_nano_seconds: nil,
+    ip_adress: nil,
+  ]
+end
+
 defmodule UdpServer do
   # Our module is going to use the DSL (Domain Specific Language) for Gen(eric) Servers
   use GenServer
@@ -43,7 +53,6 @@ defmodule UdpServer do
     opts: %UdpServerOptions{},
     pid: nil,
     socket: nil,
-    track_packets: [],
     started: %{
       at_nano_seconds: nil,
     },
@@ -122,14 +131,22 @@ defmodule UdpServer do
       data: packet,
     }
 
-    track_packets = [%{uid: uid, at_nano_seconds: nano_seconds, ip_adress: ip_adress} | state.track_packets]
-    state = Map.put(state, :track_packets, track_packets)
+    track_packet = %UdpServerTrackPacket{
+      packet_uid: uid,
+      server_uid: state.uid,
+      at_nano_seconds: nano_seconds,
+      ip_adress: ip_adress
+    }
 
     unless is_nil(pubsub), do: Kernel.apply(pubsub, :event_udp_packet, [packet])
     unless is_nil(packets_agent), do: Kernel.apply(packets_agent, :event_udp_packet, [packet])
-    unless is_nil(servers_agent), do: Kernel.apply(servers_agent, :event_update_udp_server, [state])
+    unless is_nil(servers_agent), do: Kernel.apply(servers_agent, :event_track_packets, [track_packet])
 
     {:noreply, state}
+  end
+
+  def handle_call(:state, _from, state) do
+    {:reply, state, state}
   end
 
   @impl true
